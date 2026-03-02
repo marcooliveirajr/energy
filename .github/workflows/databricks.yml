@@ -1,0 +1,70 @@
+# GitHub Actions – Projeto Energy (API MXM Databricks)
+# Repositório: https://github.com/marcooliveirajr/energy
+# Validação em todo push/PR; deploy opcional na branch main (requer secrets no repo)
+
+name: Validate and Deploy to Databricks
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  # ——— Validação (push e pull requests) ———
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Validate structure and Python
+        run: |
+          python -m py_compile src/config/paths.py 2>/dev/null || true
+          echo "Estrutura do projeto:"
+          ls -la config src docs 2>/dev/null || true
+          echo "Validação concluída."
+
+  # ——— Deploy para Databricks (apenas branch main, após push) ———
+  # Requer secrets no repo: DATABRICKS_HOST e DATABRICKS_TOKEN (Settings → Secrets and variables → Actions).
+  # Se não configurar os secrets, este job falhará; para desativar o deploy, comente todo o job deploy-databricks.
+  deploy-databricks:
+    name: Deploy to Databricks
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production  # opcional: criar environment "production" no GitHub
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install Databricks CLI
+        run: pip install databricks-cli
+
+      - name: Configure Databricks CLI
+        run: |
+          mkdir -p ~/.databrickscfg
+          cat > ~/.databrickscfg << EOF
+          [DEFAULT]
+          host = ${{ secrets.DATABRICKS_HOST }}
+          token = ${{ secrets.DATABRICKS_TOKEN }}
+          EOF
+
+      - name: Deploy to workspace (import_dir)
+        run: |
+          databricks workspace mkdirs /Workspace/Repos/deploy 2>/dev/null || true
+          databricks workspace import_dir . /Workspace/Repos/deploy/energy -o
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}

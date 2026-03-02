@@ -1,0 +1,13 @@
+-- Schema updates: Bronze (brz_t_fin_* – única camada com _t_ no prefixo)
+-- Domínio: financeiro / Fonte: api_mxm
+-- Substituir table_name pelo nome real da tabela (ex.: brz_t_fin_clientes)
+
+-- Exemplo: CREATE ou ALTER TABLE para tabela Bronze
+-- CREATE TABLE IF NOT EXISTS catalog.schema.brz_t_fin_<entidade> (
+--   ... colunas da API ...
+--   _ingested_at TIMESTAMP,
+--   _source_file STRING,
+--   _process_id STRING
+-- )
+-- USING DELTA
+-- LOCATION 'path/QVDBronze/...';

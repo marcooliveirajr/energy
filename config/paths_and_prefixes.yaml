@@ -1,0 +1,48 @@
+# Convenções de paths e prefixos - Projeto API MXM Databricks
+# Alinhado ao documento docs/ARQUITETURA_PIPELINE_DADOS.md
+# Uso: carregar em scripts de ingestão e transformação (Bronze/Silver/Gold)
+
+paths:
+  # Arquivos de apoio, configs, referência
+  arquivo: "/Arquivo"
+  # Camada Forge - logs
+  forge: "/QVDForge"
+  # Camada Bronze - dados brutos (destino direto da ingestão; não há camada Raw)
+  bronze: "/QVDBronze"
+  # Camada Silver - dados limpos e enriquecidos
+  silver: "/QVDSilver"
+  # Camada Gold - dados prontos para negócio
+  gold: "/QVDGold"
+
+# Variáveis originais (compatibilidade com documento de arquitetura)
+paths_legacy:
+  ARQPath: "/Arquivo"
+  FRGPath: "/QVDForge"
+  TBRZPath: "/QVDBronze"
+  SLRPath: "/QVDSilver"
+  GLDPath: "/QVDGold"
+
+# Prefixos: apenas Bronze tem "t" (tabela) = brz_t_fin_; demais camadas sem "t"
+# Pipeline: Forge → Bronze → Silver → Gold (sem camada Raw)
+prefixes:
+  forge: "frg_fin_"
+  bronze: "brz_t_fin_"
+  silver: "slv_fin_"
+  gold: "gld_fin_"
+
+prefixes_legacy:
+  ForgePrefixo: "frg_fin_"
+  BronzePrefixo: "brz_t_fin_"
+  SilverPrefixo: "slv_fin_"
+  GoldPrefixo: "gld_fin_"
+
+# Exemplo de uso no Databricks (DBFS ou mount)
+# base_path pode ser configurado por ambiente (dev/homolog/prod)
+databricks:
+  # Ex.: dbfs:/mnt/adls_mxm/ ou /Volumes/catalog/schema/volume/
+  base_path: ""  # preencher com o mount ou volume base
+  catalog: ""    # Unity Catalog - opcional
+  schema_forge: "forge"
+  schema_bronze: "bronze"
+  schema_silver: "silver"
+  schema_gold: "gold"

@@ -1,0 +1,11 @@
+{
+  "domain": "financeiro",
+  "source": "api_mxm",
+  "table_name": "brz_t_fin_clientes",
+  "layer": "bronze",
+  "description": "Configuração de ingestão direta para Bronze (API MXM) - clientes",
+  "api_endpoint": "/webmanager/api/InterfacedoCliente/ObterClientes",
+  "method": "POST",
+  "ingestion_strategy": "full_load",
+  "schema_updates_path": "ddl/schema_updates/brz_t_fin_clientes.sql"
+}

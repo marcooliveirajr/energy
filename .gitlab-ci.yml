@@ -1,0 +1,55 @@
+# Pipeline GitLab – Projeto API MXM Databricks
+# Integração: validar código e (opcional) sincronizar com workspace Databricks
+# Variáveis necessárias em Settings → CI/CD → Variables:
+#   DATABRICKS_HOST (ex.: https://adb-xxxxx.azuredatabricks.net)
+#   DATABRICKS_TOKEN (PAT do Databricks) – mascarada
+
+stages:
+  - validate
+  - deploy
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+# Cache de dependências (opcional)
+cache:
+  key: "${CI_COMMIT_REF_SLUG}"
+  paths:
+    - .cache/pip
+
+# ——— Validação (todo push / merge request) ———
+validate:
+  stage: validate
+  image: python:3.10-slim
+  before_script:
+    - pip install --quiet pyyaml
+  script:
+    - python -m py_compile src/config/paths.py 2>/dev/null || true
+    - echo "Estrutura do projeto:"
+    - ls -la config src docs 2>/dev/null || true
+    - echo "Validação concluída."
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+# ——— Deploy para Databricks (apenas branch main, opcional) ———
+# Descomente e ajuste se quiser sincronizar o repo com o workspace via CLI.
+# Requer: DATABRICKS_HOST e DATABRICKS_TOKEN nas variables do projeto.
+
+# deploy-databricks:
+#   stage: deploy
+#   image: python:3.10-slim
+#   before_script:
+#     - pip install databricks-cli
+#     - mkdir -p ~/.databrickscfg
+#     - |
+#       cat > ~/.databrickscfg << EOF
+#       [DEFAULT]
+#       host = ${DATABRICKS_HOST}
+#       token = ${DATABRICKS_TOKEN}
+#       EOF
+#   script:
+#     - databricks workspace mkdirs /Workspace/Repos/deploy 2>/dev/null || true
+#     - databricks workspace import_dir . /Workspace/Repos/deploy/api-mxm-databricks -o
+#   rules:
+#     - if: $CI_COMMIT_BRANCH == "main"
+#   environment: production

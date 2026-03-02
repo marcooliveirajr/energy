@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.env
+.env.local
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Databricks
+.databrickscfg
+*.dbc
+
+# Cache / Temp
+.cache/
+*.log
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets (nunca versionar)
+*.pem
+secrets/
+credentials*.json
+config/local*.yaml
+
+# Opcional: dados locais de teste
+# data/
+# *.parquet
