@@ -54,12 +54,11 @@ jobs:
 
       - name: Configure Databricks CLI
         run: |
-          mkdir -p ~/.databrickscfg
-          cat > ~/.databrickscfg << EOF
-          [DEFAULT]
-          host = ${{ secrets.DATABRICKS_HOST }}
-          token = ${{ secrets.DATABRICKS_TOKEN }}
-          EOF
+          # O Databricks CLI também aceita variáveis de ambiente
+          echo "Configuração feita via variáveis de ambiente nos próximos steps"
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
 
       - name: Deploy to workspace (import_dir)
         run: |
