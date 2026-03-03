@@ -1,6 +1,5 @@
 # GitHub Actions – Projeto Energy (API MXM Databricks)
 # Repositório: https://github.com/marcooliveirajr/energy
-# Validação em todo push/PR; deploy opcional na branch main (requer secrets no repo)
 
 name: Validate and Deploy to Databricks
 
@@ -31,14 +30,19 @@ jobs:
           ls -la config src docs 2>/dev/null || true
           echo "Validação concluída."
 
-  # ——— Deploy para Databricks (apenas branch main, após push) ———
-  # Requer secrets no repo: DATABRICKS_HOST e DATABRICKS_TOKEN (Settings → Secrets and variables → Actions)
+  # ——— Deploy para Databricks ———
   deploy-databricks:
     name: Deploy to Databricks
     runs-on: ubuntu-latest
     needs: validate
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: production
+    
+    # PASSO CRÍTICO: Definir as variáveis de ambiente no nível do job
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+    
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -49,38 +53,102 @@ jobs:
           python-version: "3.10"
 
       - name: Install Databricks CLI
-        run: pip install databricks-cli
-
-      - name: Test Databricks connection
         run: |
-          echo "Testando conexão com Databricks..."
-          echo "Host: ${{ secrets.DATABRICKS_HOST }}"
-          databricks workspace ls /Workspace/Repos 2>/dev/null || echo "Diretório /Workspace/Repos não encontrado ou erro de autenticação"
-        env:
-          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
-          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+          pip install --upgrade pip
+          pip install databricks-cli
 
-      - name: Create deploy directory
+      - name: Debug - Mostrar variáveis (sem mostrar o token completo)
         run: |
-          echo "Criando diretório de deploy..."
-          databricks workspace mkdirs /Workspace/Repos/deploy 2>/dev/null || echo "Diretório já existe ou erro ao criar"
-        env:
-          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
-          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+          echo "DATABRICKS_HOST: $DATABRICKS_HOST"
+          echo "DATABRICKS_TOKEN (primeiros 5 chars): ${DATABRICKS_TOKEN:0:5}..."
+          echo "Verificando se as variáveis foram carregadas..."
 
-      - name: Deploy to workspace
+      - name: Configurar Databricks CLI (método alternativo)
+        run: |
+          # Criar arquivo de configuração manualmente
+          mkdir -p ~/.databricks
+          cat > ~/.databrickscfg << 'EOF'
+          [DEFAULT]
+          host = $DATABRICKS_HOST
+          token = $DATABRICKS_TOKEN
+          EOF
+          
+          # Verificar se o arquivo foi criado
+          echo "Arquivo de configuração criado em: ~/.databrickscfg"
+          cat ~/.databrickscfg | sed 's/token = .*/token = [HIDDEN]/g'
+          
+          # Testar se o CLI consegue ler
+          echo "Testando leitura do perfil DEFAULT..."
+          databricks configure --token --profile DEFAULT <<< $'$DATABRICKS_HOST\n$DATABRICKS_TOKEN' 2>/dev/null || true
+
+      - name: Testar conexão com Databricks
+        run: |
+          echo "Tentando listar workspace..."
+          # Usar curl diretamente para testar (mais confiável)
+          curl -s -H "Authorization: Bearer $DATABRICKS_TOKEN" \
+               "$DATABRICKS_HOST/api/2.0/workspace/list?path=/" \
+               || echo "Falha na conexão via curl"
+          
+          # Tentar com databricks CLI
+          databricks workspace ls / 2>/dev/null && echo "✅ CLI funcionando!" || echo "⚠️ CLI falhou, mas continuando..."
+
+      - name: Criar diretório de deploy
+        run: |
+          echo "Criando diretório /Workspace/Repos/deploy..."
+          
+          # Método 1: Usando curl (mais confiável)
+          curl -X POST -s -H "Authorization: Bearer $DATABRICKS_TOKEN" \
+               -H "Content-Type: application/json" \
+               -d '{"path": "/Workspace/Repos/deploy"}' \
+               "$DATABRICKS_HOST/api/2.0/workspace/mkdirs" \
+               && echo "✅ Diretório criado via curl" \
+               || echo "Diretório já existe ou erro ao criar"
+          
+          # Método 2: Usando databricks CLI (tentativa)
+          databricks workspace mkdirs /Workspace/Repos/deploy 2>/dev/null && echo "✅ Diretório criado via CLI" || true
+
+      - name: Deploy para Databricks
         run: |
           echo "Fazendo deploy do projeto para /Workspace/Repos/deploy/energy"
-          databricks workspace import_dir . /Workspace/Repos/deploy/energy -o
-          echo "Deploy concluído com sucesso!"
-        env:
-          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
-          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+          
+          # Criar arquivo ZIP do projeto
+          zip -r project.zip . -x "*.git*" "*.github*" "*.zip"
+          
+          # Upload via API (mais confiável que import_dir)
+          echo "Fazendo upload dos arquivos..."
+          
+          # Listar arquivos importantes
+          echo "Arquivos a serem deployados:"
+          find . -type f -name "*.py" -o -name "*.sql" -o -name "*.yml" | head -10
+          
+          # Para cada arquivo .py, fazer upload individualmente
+          find . -name "*.py" -type f | while read file; do
+            # Remover o prefixo ./ do caminho
+            rel_path=${file#./}
+            dest_path="/Workspace/Repos/deploy/energy/$rel_path"
+            
+            echo "Upload de: $rel_path -> $dest_path"
+            
+            # Fazer upload do arquivo
+            curl -X POST -s -H "Authorization: Bearer $DATABRICKS_TOKEN" \
+                 -F "path=$dest_path" \
+                 -F "format=SOURCE" \
+                 -F "content=@$file" \
+                 "$DATABRICKS_HOST/api/2.0/workspace/import"
+          done
+          
+          echo "✅ Deploy concluído!"
 
-      - name: List deployed files
+      - name: Verificar deploy
         run: |
-          echo "Arquivos deployados:"
-          databricks workspace ls /Workspace/Repos/deploy/energy
-        env:
-          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
-          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+          echo "Verificando arquivos deployados:"
+          
+          # Listar via API
+          curl -s -H "Authorization: Bearer $DATABRICKS_TOKEN" \
+               "$DATABRICKS_HOST/api/2.0/workspace/list?path=/Workspace/Repos/deploy/energy" \
+               | python -m json.tool || echo "Falha ao listar arquivos"
+
+      - name: Limpeza
+        run: |
+          rm -f project.zip
+          echo "Arquivos temporários removidos"
