@@ -3,6 +3,7 @@
 [![Validate and Deploy to Databricks](https://github.com/marcooliveirajr/energy/actions/workflows/databricks.yml/badge.svg)](https://github.com/marcooliveirajr/energy/actions/workflows/databricks.yml)
 
 Repositório do projeto de **arquitetura de dados** com ingestão da **API MXM-WebManager**, processamento no **Databricks** (Forge → Bronze → Silver → Gold) e disponibilização para o negócio.
+com CI/CD
 
 **Repositório:** [https://github.com/marcooliveirajr/energy](https://github.com/marcooliveirajr/energy)
 
