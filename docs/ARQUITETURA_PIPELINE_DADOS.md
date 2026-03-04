@@ -442,3 +442,5 @@ Detalhes em [src/framework/README.md](../src/framework/README.md).
 - Padrões EDPS (WDiscovery) – documento base
 - Databricks Medallion Architecture
 - Unity Catalog e Delta Lake – documentação oficial Databricks
+
+teste CI/CD
