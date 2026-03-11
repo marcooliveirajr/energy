@@ -1,8 +1,0 @@
-{
-  "domain": "financeiro",
-  "source": "api_mxm",
-  "source_table": "brz_t_fin_titulos_receber",
-  "table_name": "slv_fin_titulos_receber",
-  "layer": "silver",
-  "description": "Configuração Bronze → Silver para títulos a receber"
-}

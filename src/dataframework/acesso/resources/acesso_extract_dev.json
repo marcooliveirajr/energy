@@ -1,0 +1,45 @@
+{
+  "connection": {
+    "host_primary": "database-acesso-02-replica.cvicxzrqb58o.us-east-2.rds.amazonaws.com",
+    "host_replica": "database-acesso-02-replica-2.cvicxzrqb58o.us-east-2.rds.amazonaws.com",
+    "port": 3306,
+    "database": "db_energia_rzk",
+    "user": "amee"
+  },
+  "target": {
+    "bronze_base": "s3://thopenenergy/DEV/bronze",
+    "forge_base": "s3://thopenenergy/DEV/forge",
+    "domain": "acesso"
+  },
+  "recordsets": [
+    {
+      "source_table": "tb_extrato_fatura_bruto",
+      "target_table": "raw_t_acesso_extrato_fatura_bruto",
+      "enabled": 1,
+      "columns": [
+        {"name": "idFaturaBruta", "datatype": "INTEGER"},
+        {"name": "idFaturaDownload", "datatype": "INTEGER"},
+        {"name": "situacao", "datatype": "VARCHAR(255)"},
+        {"name": "num_fatura", "datatype": "VARCHAR(255)"},
+        {"name": "valorFatura", "datatype": "DECIMAL(38,10)"},
+        {"name": "dataVencimento", "datatype": "TIMESTAMP"}
+      ]
+    },
+    {
+      "source_table": "tb_fase_oportunidade",
+      "target_table": "raw_t_acesso_fase_oportunidade",
+      "enabled": 1,
+      "columns": [
+        {"name": "idFaseOportunidade", "datatype": "INTEGER"},
+        {"name": "idLead", "datatype": "INTEGER"},
+        {"name": "situacao", "datatype": "VARCHAR(255)"},
+        {"name": "dataInicio", "datatype": "TIMESTAMP"},
+        {"name": "dataFinal", "datatype": "TIMESTAMP"},
+        {"name": "situacaoOriginal", "datatype": "VARCHAR(255)"},
+        {"name": "tipoProduto", "datatype": "VARCHAR(255)"},
+        {"name": "idLeadFingerprint", "datatype": "INTEGER"},
+        {"name": "idUsuario", "datatype": "INTEGER"}
+      ]
+    }
+  ]
+}

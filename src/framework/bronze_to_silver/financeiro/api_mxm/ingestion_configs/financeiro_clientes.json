@@ -1,8 +1,0 @@
-{
-  "domain": "financeiro",
-  "source": "api_mxm",
-  "source_table": "brz_t_fin_clientes",
-  "table_name": "slv_fin_clientes",
-  "layer": "silver",
-  "description": "Configuração Bronze → Silver para clientes"
-}
