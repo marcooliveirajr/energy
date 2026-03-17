@@ -69,19 +69,19 @@ class BaseExtractor(ABC):
         pass
 
 class GenericExtractor(BaseExtractor):
-"""
-Extrator genérico para endpoints que não precisam de lógica especial.
-"""
-def extract(self, **kwargs) -> List[Dict[str, Any]]:
-    try:
-        response = self._make_request(kwargs.get("data"))
-        if response and "Data" in response:
-            data = response["Data"]
-            if isinstance(data, list):
-                return data
-            elif isinstance(data, dict):
-                return [data]
-        return []
-    except Exception as e:
-        logger.error(f"Erro no GenericExtractor: {e}")
-        return []
+    """
+    Extrator genérico para endpoints que não precisam de lógica especial.
+    """
+    def extract(self, **kwargs) -> List[Dict[str, Any]]:
+        try:
+            response = self._make_request(kwargs.get("data"))
+            if response and "Data" in response:
+                data = response["Data"]
+                if isinstance(data, list):
+                    return data
+                elif isinstance(data, dict):
+                    return [data]
+            return []
+        except Exception as e:
+            logger.error(f"Erro no GenericExtractor: {e}")
+            return []

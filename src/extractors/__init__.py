@@ -1,4 +1,19 @@
 from .base_extractor import BaseExtractor
-from .incremental_extractors import FaturaExtractor
+from .cliente_extractor import ClienteExtractor
+from .incremental_extractors import (
+    FaturaExtractor,
+    FornecedorExtractor,
+    PedidosVendaExtractor,
+    TitulosExtractor,
+    SaldoContabilExtractor
+)
 
-__all__ = ['BaseExtractor', 'FaturaExtractor']
+__all__ = [
+    'BaseExtractor',
+    'ClienteExtractor',
+    'FaturaExtractor',
+    'FornecedorExtractor',
+    'PedidosVendaExtractor',
+    'TitulosExtractor',
+    'SaldoContabilExtractor'
+]
